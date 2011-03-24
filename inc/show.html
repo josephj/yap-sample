@@ -1,0 +1,23 @@
+<div id="show" class="clearfix">
+    <div class="hd">
+        <h2>Output</h2>    
+    </div>
+    <div class="bd">
+        <ol>
+            <?php
+                 if (isset($friends)) { 
+                     for($i = 0; $i < count($friends); $i++){
+                        $guid = $friends[$i]->guid;
+                        $nickname = $friends[$i]->nickname;
+                        $img_url=$friends[$i]->image->imageUrl;
+            ?><li>
+                <a href="friend.php?guid=<?php echo $guid; ?>"  title="<?php echo $nickname; ?>"><img src="<?php echo $img_url; ?>"></a>
+            </li>
+            <?php        
+                     } 
+                 } 
+            ?>
+
+        </ol>
+    </div>
+</div>

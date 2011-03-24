@@ -1,0 +1,132 @@
+<?php 
+    require_once('lib/db.php');  
+    $method = getGET('method');
+    $timestamp = getGET('timestamp');
+    switch ($method) {
+        case 'phpsdk':
+            $friends = getFriend($user);
+            break;
+    }
+?>
+<h1>People</h1>
+<div id="form">
+    <form action="people.html">
+        <div>
+            <span class="yui-button">
+                <span class="first-child">
+                    <input type="submit" value="Fetch" onclick="getPeople();return false;">
+                    <span>Fetch (AJAX)</span>
+                </span>
+            </span>
+            <input type="hidden" name="method" value="phpsdk">
+            <input type="hidden" name="timestamp" value="">
+            <span class="yui-button">
+                <span class="first-child">
+                    <input type="submit" value="Fetch" onclick="setReload();return false;">
+                    <span>Fetch (Reload)</span>
+                </span>
+            </span>
+        </div>
+    </form>
+</div>
+<?php include('inc/show.html'); ?>
+<div id="source" class="clearfix">
+    <div class="hd">
+        <h2>Sample Code</h2>
+    </div>
+    <div class="bd">
+        <textarea class="code">function callback(resp) {
+    var resp = resp.get('people');
+    var data = resp.getData();
+    var html = [];
+    data.each(function(person) {
+        html.push(['<li>',
+            '<a href="' + person.getField(opensocial.Person.Field.PROFILE_URL) + '" title="' + person.getDisplayName() + '">',
+                '<img s' + 'rc="' + person.getField(opensocial.Person.Field.THUMBNAIL_URL) + '">',
+            '</a>',
+        '</li>'].join(''));
+    });
+	
+	// Modify here! Not just alert!
+    alert(html.join(''));
+}
+function getPeople() {
+    var params = {};
+    params[opensocial.DataRequest.PeopleRequestFields.MAX] = 150;
+    var req = opensocial.newDataRequest();
+    var idspec = opensocial.newIdSpec();
+    idspec.setField(opensocial.IdSpec.Field.USER_ID, opensocial.IdSpec.PersonId.VIEWER);
+    idspec.setField(opensocial.IdSpec.Field.NETWORK_DISTANCE, 1); // greater than 1 is not supported
+    req.add(req.newFetchPeopleRequest(idspec, params), 'people');
+    req.send(callback);
+}
+getPeople();
+</textarea>
+    </div>
+</div>
+<?php include('inc/error.html'); ?>
+<?php include('inc/foot.html'); ?>
+<?php include('inc/css.html'); ?>
+<style>
+#show ol li {float:left;list-style-type:none;margin:0;width:48px;height:48px;overflow:hidden;margin:0 5px 5px;}
+</style>
+<?php include('inc/js.html'); ?>
+<script>
+var showEl = document.getElementById('show');
+var formEl = document.getElementById('form').getElementsByTagName('form')[0];
+var listEl = getElementsByClassName('bd', 'div', showEl)[0].getElementsByTagName('ol')[0];
+var errorEl = getElementsByClassName('bd', 'div', document.getElementById('error'))[0].getElementsByTagName('ol')[0];
+var statEl = document.getElementById('benchmark');
+var tStart, tEnd;
+//var selectEl = formEl.elements['user'];
+//var selectEl2 = formEl.elements['group'];
+function setReload() {
+    formEl.elements['timestamp'].value = (new Date()).toString();
+    formEl.submit();
+}
+function callback(resp) {
+    var resp = resp.get('people');
+    if (resp.hadError()) { 
+        errorEl.innerHTML += '<li>' + resp.getErrorMessage() + '</li>';
+        return;
+    }
+    listEl.innerHTML = '';
+    var data = resp.getData();
+    var html = [];
+    data.each(function(person) {
+        html.push('<li><a href="' + person.getField(opensocial.Person.Field.PROFILE_URL) + '" title="' + person.getDisplayName() + '"><img s' + 'rc="' + person.getField(opensocial.Person.Field.THUMBNAIL_URL) +  '" alt="' + person.getDisplayName() + '"></a></li>');
+    });
+    listEl.innerHTML += html.join('');
+    tEnd = new Date();
+    statEl.innerHTML = 'Success Benchmark: ' + ((tEnd - tStart) / 1000) + ' secs';
+}
+var tStart = 0;
+var tEnd = 0;
+function getPeople() {
+    var params = {};
+    // YAP only support FIRST, MAX
+    params[opensocial.DataRequest.PeopleRequestFields.MAX] = 150;
+    // YAP not support yet
+    // params[opensocial.DataRequest.PeopleRequestFields.FILTER] = opensocial.DataRequest.FilterType.HAS_APP;
+    // params[opensocial.DataRequest.PeopleRequestFields.SORT_ORDER] = opensocial.DataRequest.SortOrder.NAME; 
+    // params[opensocial.DataRequest.PeopleRequestFields.PROFILE_DETAILS]
+    var req = opensocial.newDataRequest();
+    /*
+    var idspec = opensocial.newIdSpec({
+        'userId': selectEl.options[selectEl.selectedIndex].text, 
+        'groupId':selectEl2.options[selectEl2.selectedIndex].text
+    });
+    */
+    var idspec = opensocial.newIdSpec();
+    idspec.setField(opensocial.IdSpec.Field.USER_ID, opensocial.IdSpec.PersonId.VIEWER);
+    idspec.setField(opensocial.IdSpec.Field.NETWORK_DISTANCE, 1); // greater than 1 is not supported
+    req.add(req.newFetchPeopleRequest(idspec, params), 'people');
+    req.send(callback);
+    tStart = new Date();
+}
+<?php if (isset($friends)) { ?>
+var tEnd = new Date();
+var tStart = new Date('<?php echo $timestamp; ?>');
+statEl.innerHTML = 'Success Benchmark: ' + (tEnd - tStart)/1000 + ' sec';
+<?php } ?>
+</script>

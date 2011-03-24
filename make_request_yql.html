@@ -1,0 +1,205 @@
+<h1>makeRequest</h1>
+<div id="form">
+    <form onsubmit="return false;">
+        <div>
+            <label>Query: </label>
+            <textarea class="query" name="query">select * from geo.places where text='SFO'</textarea> 
+            <label>Type:</label>
+            <select name="type">
+                <option value="json">JSON</option>
+                <option value="xml">XML</option>
+            </select>
+            <span class="yui-button">
+                <span class="first-child">
+                    <input type="submit" value="Send" onclick="getData();">
+                    <span>Send</span>
+                </span>
+            </span>
+        </div>
+    </form>
+</div>
+<?php include('inc/show.html'); ?>
+<div id="source">
+    <div class="hd">
+        <h2>Source Code</h2>
+    </div>
+    <div class="bd">
+        <textarea class="code">function toQueryString(obj) {
+    var parts = [];
+    for(var each in obj) if (obj.hasOwnProperty(each)) {
+        parts.push(encodeURIComponent(each) + '=' + encodeURIComponent(obj[each]));
+    }
+    return parts.join('&');
+}
+function getData() {
+    makeRequest({
+        'authorization': 'OAuth',
+        'method': 'post',
+        'url': 'http://query.yahooapis.com/v1/yql', 
+        'type': 'json', 
+        'postdata': toQueryString({q: "select * from geo.places where text='SFO'", format: 'json'}),
+        'callback': function(o) {
+            var data = o.data;
+            alert(gadgets.json.stringify(data));
+        }
+    });
+}
+function makeRequest(attr) {
+    var attr = attr || {};
+    if (!attr.url || !attr.callback) {
+        return;
+    }
+    var params = {};
+    attr.method = (typeof (attr.method) !== 'undefined') ? attr.method : 'GET';
+    attr.type = (typeof (attr.type) !== 'undefined') ? attr.type: 'TEXT';
+    var gioReq = gadgets.io.RequestParameters;
+    switch (attr.method.toLowerCase()) {
+        case 'post':
+            params[gioReq.METHOD] = gadgets.io.MethodType.POST;
+            break;
+        case 'delete':
+            params[gioReq.METHOD] = gadgets.io.MethodType.DELETE;
+            break;
+        case 'put':
+            params[gioReq.METHOD] = gadgets.io.MethodType.PUT;
+            break;
+        default:
+            params[gioReq.METHOD] = gadgets.io.MethodType.GET;
+            break;
+    }
+    switch (attr.type.toLowerCase()) {
+        case 'feed':
+        case 'rss':
+            params[gioReq.CONTENT_TYPE] = gadgets.io.ContentType.FEED;
+            params[gioReq.NUM_ENTRIES] = (typeof (attr.total) != 'undefined') ? attr.total : 10;
+            params[gioReq.GET_SUMMARIES] = (typeof (attr.is_summary) != 'undefined') ? attr.is_summary : false;
+            break;
+        case 'json':
+            params[gioReq.CONTENT_TYPE] = gadgets.io.ContentType.JSON;
+            break;
+        case 'dom':
+            params[gioReq.CONTENT_TYPE] = gadgets.io.ContentType.DOM;
+            break;
+        default:
+            params[gioReq.CONTENT_TYPE] = gadgets.io.ContentType.TEXT;
+    }
+    if (typeof (attr.postdata)) {
+         params[gioReq.POST_DATA] = attr.postdata;
+         // gadgets.io.encodeValues
+    }
+    if (typeof (attr.interval)) {
+        params[gioReq.REFRESH_INTERVAL] = attr.interval;
+    }
+    if (typeof (attr.header)) {
+        params[gioReq.HEADER] = attr.header;
+    }
+    if (typeof (attr.authorization)) {
+        params[gioReq.AUTHORIZATION] = attr.authorization;
+    }
+    gadgets.io.makeRequest(attr.url, attr.callback, params);
+}
+getData();
+</textarea>
+    </div>
+</div>
+<?php include('inc/error.html'); ?>
+<?php include('inc/foot.html'); ?>
+<?php include('inc/css.html'); ?>
+<style>#form textarea.query {width:330px;border:solid 1px #ccc;font-size:16px;font-weight:bold;height:90px;padding:6px;color:#666;}</style>
+<?php include('inc/js.html'); ?>
+<script>
+var showEl = document.getElementById('show');
+var formEl = document.getElementById('form').getElementsByTagName('form')[0];
+var listEl = getElementsByClassName('bd', 'div', showEl)[0].getElementsByTagName('ol')[0];
+var errorEl = getElementsByClassName('bd', 'div', document.getElementById('error'))[0].getElementsByTagName('ol')[0];
+var statEl = document.getElementById('benchmark');
+var tStart, tEnd;
+function toQueryString(obj) {
+    var parts = [];
+    for(var each in obj) if (obj.hasOwnProperty(each)) {
+        parts.push(encodeURIComponent(each) + '=' + encodeURIComponent(obj[each]));
+    }
+    return parts.join('&');
+}
+// getData() {{{
+function getData() {
+    var type = formEl.elements['type'].options[formEl.elements['type'].selectedIndex].value;
+    var query = formEl.elements['query'].value;
+    makeRequest({
+        'authorization': 'OAuth',
+        'method': 'post',
+        'url': 'http://query.yahooapis.com/v1/yql', 
+        'type': type, 
+        'postdata': toQueryString({q: query, format: 'json'}),
+        'callback': function(o) {
+            var data = o.data;
+            if (type == 'json') {
+                listEl.innerHTML += '<li>' + gadgets.json.stringify(data) + '</li>';
+            }
+            else {
+                listEl.innerHTML += '<li>Fetch Feed Successfully</li>';
+            }
+            tEnd = new Date();
+            statEl.innerHTML = 'Success Benchmark: ' + ((tEnd - tStart) / 1000) + ' sec'; 
+        }
+    });
+    tStart = new Date();
+}
+// }}}
+// makeRequest(attr) {{{
+function makeRequest(attr) {
+    var attr = attr || {};
+    if (!attr.url || !attr.callback) {
+        return;
+    }
+    var params = {};
+    attr.method = (typeof (attr.method) !== 'undefined') ? attr.method : 'GET';
+    attr.type = (typeof (attr.type) !== 'undefined') ? attr.type: 'TEXT';
+    var gioReq = gadgets.io.RequestParameters;
+    switch (attr.method.toLowerCase()) {
+        case 'post':
+            params[gioReq.METHOD] = gadgets.io.MethodType.POST;
+            break;
+        case 'delete':
+            params[gioReq.METHOD] = gadgets.io.MethodType.DELETE;
+            break;
+        case 'put':
+            params[gioReq.METHOD] = gadgets.io.MethodType.PUT;
+            break;
+        default:
+            params[gioReq.METHOD] = gadgets.io.MethodType.GET;
+            break;
+    }
+    switch (attr.type.toLowerCase()) {
+        case 'feed':
+        case 'rss':
+            params[gioReq.CONTENT_TYPE] = gadgets.io.ContentType.FEED;
+            params[gioReq.NUM_ENTRIES] = (typeof (attr.total) != 'undefined') ? attr.total : 10;
+            params[gioReq.GET_SUMMARIES] = (typeof (attr.is_summary) != 'undefined') ? attr.is_summary : false;
+            break;
+        case 'json':
+            params[gioReq.CONTENT_TYPE] = gadgets.io.ContentType.JSON;
+            break;
+        case 'dom':
+            params[gioReq.CONTENT_TYPE] = gadgets.io.ContentType.DOM;
+            break;
+        default:
+            params[gioReq.CONTENT_TYPE] = gadgets.io.ContentType.TEXT;
+    }
+    if (typeof (attr.postdata)) {
+         params[gioReq.POST_DATA] = attr.postdata;
+         // gadgets.io.encodeValues
+    }
+    if (typeof (attr.interval)) {
+        params[gioReq.REFRESH_INTERVAL] = attr.interval;
+    }
+    if (typeof (attr.header)) {
+        params[gioReq.HEADER] = attr.header;
+    }
+    if (typeof (attr.authorization)) {
+        params[gioReq.AUTHORIZATION] = attr.authorization;
+    }
+    gadgets.io.makeRequest(attr.url, attr.callback, params);
+}
+// }}}
+</script>

@@ -1,0 +1,38 @@
+<!-- Assignment : put my friends' icons into #show -->
+<ul id="show"></ul>
+<style>
+ul#show img {border:none;}
+ul#show li {float:left;list-style-type:none;margin:0;width:48px;height:48px;overflow:hidden;margin:0 5px 5px;}
+</style>
+<script>
+/* The following code is copied from my YAP app, need to be modify */
+function callback(resp) {
+    var resp = resp.get('people');
+    var data = resp.getData();
+    var html = [];
+    data.each(function(person) {
+        html.push(['<li>',
+            '<a href="' + person.getField(opensocial.Person.Field.PROFILE_URL) + '" title="' + person.getDisplayName() + '">',
+                '<img s' + 'rc="' + person.getField(opensocial.Person.Field.THUMBNAIL_URL) + '">',
+            '</a>',
+        '</li>'].join(''));
+    });
+	
+	// Modify here! Not just alert!
+    document.getElementById('show').innerHTML = html.join('');
+}
+function getPeople() {
+    var params = {};
+    params[opensocial.DataRequest.PeopleRequestFields.MAX] = 150;
+    var req = opensocial.newDataRequest();
+    var idspec = opensocial.newIdSpec();
+    idspec.setField(opensocial.IdSpec.Field.USER_ID, opensocial.IdSpec.PersonId.VIEWER);
+    idspec.setField(opensocial.IdSpec.Field.NETWORK_DISTANCE, 1); // greater than 1 is not supported
+    req.add(req.newFetchPeopleRequest(idspec, params), 'people');
+    req.send(callback);
+}
+getPeople();
+
+</script>
+<style>
+</style>

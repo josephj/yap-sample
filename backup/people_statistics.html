@@ -1,0 +1,100 @@
+<h1>People</h1>
+<div id="form">
+    <form onsubmit="return false;">
+        <div>
+            <label>userId: </label>
+            <select name="user">
+                <option value="1">VIEWER</option>
+                <option value="0">OWNER</option>
+            </select>
+            <label>groupId: </label>
+            <select name="group">
+                <option value="1">FRIENDS</option>
+                <option value="0">SELF</option>
+            </select>
+            <span class="yui-button">
+                <span class="first-child">
+                    <input type="submit" value="Fetch" onclick="getPeople();">
+                    <span>Fetch</span>
+                </span>
+            </span>
+        </div>
+    </form>
+</div>
+<?php include('inc/show.html'); ?>
+<?php include('inc/error.html'); ?>
+<?php include('inc/foot.html'); ?>
+<?php include('inc/css.html'); ?>
+<?php include('inc/js.html'); ?>
+<script>
+var showEl = document.getElementById('show');
+var formEl = document.getElementById('form').getElementsByTagName('form')[0];
+var listEl = getElementsByClassName('bd', 'div', showEl)[0].getElementsByTagName('ol')[0];
+var errorEl = getElementsByClassName('bd', 'div', document.getElementById('error'))[0].getElementsByTagName('ol')[0];
+var selectEl = formEl.elements['user'];
+var selectEl2 = formEl.elements['group'];
+var statEl = document.getElementById('benchmark');
+var tStart, tEnd;
+var persons = {};
+function callback2(resp) {
+    for (var i in persons) {
+        try {
+            var label = persons[i]['id'];
+            var resp = resp.get(label);
+            if (resp.hadError()) { 
+                continue;
+            }
+            var person = resp.getData();
+            persons[i]['total'] = person.getTotalSize();
+        } 
+        catch (e) {
+        }
+    }
+    listEl.innerHTML += html.join('');
+    tEnd = new Date();
+    statEl.innerHTML = 'Success Benchmark: ' + ((tEnd - tStart) / 1000) + ' sec'; 
+}
+function callback(resp) {
+    var resp = resp.get('people');
+    if (resp.hadError()) { 
+        errorEl.innerHTML += '<li>' + resp.getErrorMessage() + '</li>';
+        return;
+    }
+    var req = opensocial.newDataRequest();
+    var params = {};
+    params[opensocial.DataRequest.PeopleRequestFields.MAX] = 150;
+    var data = resp.getData();
+    var i = 0;
+    data.each(function(person) {
+        var id = person.getField(opensocial.Person.Field.ID);
+        var thumb = person.getField(opensocial.Person.Field.PROFILE_URL);
+        var name = person.getDisplayName();
+        persons[id] = {
+            'id' : 'yap-' + i,
+            'thumb' : thumb,
+            'name' : name,
+            'total' : 0
+        };
+        var idspec = opensocial.newIdSpec({'userId': id});
+        req.add(req.newFetchPeopleRequest(idspec, params), persons[id]['id']);
+        i++;
+    });
+    req.send(callback2);
+    tStart = new Date();
+}
+function getPeople() {
+    var params = {};
+    params[opensocial.DataRequest.PeopleRequestFields.MAX] = 150;
+    params[opensocial.DataRequest.PeopleRequestFields.FILTER] = opensocial.DataRequest.FilterType.HAS_APP;
+    params[opensocial.DataRequest.PeopleRequestFields.SORT_ORDER] = opensocial.DataRequest.SortOrder.NAME;
+    var req = opensocial.newDataRequest();
+    var idspec = opensocial.newIdSpec({
+        'userId': selectEl.options[selectEl.selectedIndex].text, 
+        'groupId':selectEl2.options[selectEl2.selectedIndex].text
+    });
+    req.add(req.newFetchPeopleRequest(idspec, params), 'people');
+    req.send(callback);
+    tStart = new Date();
+}
+
+</script>

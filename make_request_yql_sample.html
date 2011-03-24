@@ -1,0 +1,94 @@
+<!-- Assignment : using YQL to search 'sexy' photos on flick into #show -->
+<ul id="show"></ul>
+<style>
+ul#show img {border:none;}
+ul#show li {float:left;list-style-type:none;margin:0;width:48px;height:48px;overflow:hidden;margin:0 5px 5px;}
+</style>
+<script>
+/* The following code is copied from my YAP app, need to be modify */
+/* select * from flickr.photos.search where text='sexy' */	
+function toQueryString(obj) {
+    var parts = [];
+    for(var each in obj) if (obj.hasOwnProperty(each)) {
+        parts.push(encodeURIComponent(each) + '=' + encodeURIComponent(obj[each]));
+    }
+    return parts.join('&');
+}
+function getData() {
+    makeRequest({
+        'authorization': 'OAuth',
+        'method': 'post',
+        'url': 'http://query.yahooapis.com/v1/yql', 
+        'type': 'json', 
+        'postdata': toQueryString({q: "select * from flickr.photos.search where text='sexy'", format: 'json'}),
+        'callback': function(o) {
+            var data = o.data;
+            alert(gadgets.json.stringify(data));
+			var items = data.query.results.photo;
+			var html = [];
+		    for (var i = 0, j= items.length; i < j; i++) {                                                                                                                             
+		        var img = 'http://farm' + items[i].farm + '.static.flickr.com/' + items[i].server + '/' + items[i].id + '_' + items[i].secret + '_s.jpg';
+		        var link = 'http://www.flickr.com/photos/' + items[i].owner + '/' + items[i].id;
+		        html.push('<li><a href="' + link + '" title="' + items[i].title + '"><img sr' + 'c="' + img + '"></a></li>');                                                            
+		    }    	
+			document.getElementById('show').innerHTML = html.join('');			
+            
+        }
+    });
+}
+function makeRequest(attr) {
+    var attr = attr || {};
+    if (!attr.url || !attr.callback) {
+        return;
+    }
+    var params = {};
+    attr.method = (typeof (attr.method) !== 'undefined') ? attr.method : 'GET';
+    attr.type = (typeof (attr.type) !== 'undefined') ? attr.type: 'TEXT';
+    var gioReq = gadgets.io.RequestParameters;
+    switch (attr.method.toLowerCase()) {
+        case 'post':
+            params[gioReq.METHOD] = gadgets.io.MethodType.POST;
+            break;
+        case 'delete':
+            params[gioReq.METHOD] = gadgets.io.MethodType.DELETE;
+            break;
+        case 'put':
+            params[gioReq.METHOD] = gadgets.io.MethodType.PUT;
+            break;
+        default:
+            params[gioReq.METHOD] = gadgets.io.MethodType.GET;
+            break;
+    }
+    switch (attr.type.toLowerCase()) {
+        case 'feed':
+        case 'rss':
+            params[gioReq.CONTENT_TYPE] = gadgets.io.ContentType.FEED;
+            params[gioReq.NUM_ENTRIES] = (typeof (attr.total) != 'undefined') ? attr.total : 10;
+            params[gioReq.GET_SUMMARIES] = (typeof (attr.is_summary) != 'undefined') ? attr.is_summary : false;
+            break;
+        case 'json':
+            params[gioReq.CONTENT_TYPE] = gadgets.io.ContentType.JSON;
+            break;
+        case 'dom':
+            params[gioReq.CONTENT_TYPE] = gadgets.io.ContentType.DOM;
+            break;
+        default:
+            params[gioReq.CONTENT_TYPE] = gadgets.io.ContentType.TEXT;
+    }
+    if (typeof (attr.postdata)) {
+         params[gioReq.POST_DATA] = attr.postdata;
+         // gadgets.io.encodeValues
+    }
+    if (typeof (attr.interval)) {
+        params[gioReq.REFRESH_INTERVAL] = attr.interval;
+    }
+    if (typeof (attr.header)) {
+        params[gioReq.HEADER] = attr.header;
+    }
+    if (typeof (attr.authorization)) {
+        params[gioReq.AUTHORIZATION] = attr.authorization;
+    }
+    gadgets.io.makeRequest(attr.url, attr.callback, params);
+}
+getData();
+</script>

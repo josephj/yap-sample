@@ -1,0 +1,12 @@
+<div id="tab"></div>
+<script>
+alert(YAHOO.util.Dom);
+var prefs = new gadgets.Prefs();
+var name = prefs.getString("name");
+alert(name); //nothing
+var lang = prefs.getLang();
+alert(lang); //en
+
+var tab = new gadgets.TabSet('tab') 
+tab.addTab('tab1');
+</script>

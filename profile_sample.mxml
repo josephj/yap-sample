@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical" initialize="handleInitialize(event)"> 
+    <mx:Script>
+        <![CDATA[
+            import mx.controls.Alert;
+            import mx.events.CloseEvent;
+            import mx.events.FlexEvent;
+            import mx.managers.PopUpManager;
+            // The Classes Yahoo! Social API Provides
+            import com.yahoo.social.events.YahooResultEvent;
+            import com.yahoo.social.data.Profile;
+            import com.yahoo.social.data.Presence;
+            import com.yahoo.social.YahooUser;
+            import com.yahoo.social.YahooSession;
+            // Bindable : while the variable changes, the involved UI would also be updated
+            [Bindable] private var _viewerProfile:Profile;
+            [Bindable] private var _viewerPresence:Presence;
+            [Bindable] private var _viewerUpdates:Array;
+            private var _session:YahooSession;
+            private var _user:YahooUser;
+            private static const CONSUMER_SECRET:String = "aedcf4be5988dc31489d47e3c76736a29f2d33fe";
+            // handleInitialize(event:FlexEvent) : initial {{{
+            private function handleInitialize(event:FlexEvent):void {
+                // All the flashvars will be got in YAP environment
+                var flashvars:Object = Application.application.parameters;
+                var ck:String = flashvars.yap_consumer_key;                 // consumer key
+                var cks:String = CONSUMER_SECRET;                           // consumer secret
+                var atk:String = flashvars.yap_viewer_access_token;         // access token
+                var ats:String = flashvars.yap_viewer_access_token_secret;  // access token secret
+                YahooSession.YAP_OWNER = flashvars.yap_owner_guid;          // 
+                YahooSession.YAP_VIEWER = flashvars.yap_viewer_guid;        // 
+                YahooSession.YAP_APPID = flashvars.yap_appid;               // 
+                // build the session object
+                _session = new YahooSession(ck, cks, atk, ats);
+                // get the user object from session object
+                _user = _session.getSessionedUser();
+                // event binding for both fail and success
+                _user.profile.addEventListener(YahooResultEvent.GET_PROFILE_SUCCESS, handleUserGetProfile);
+                _user.status.addEventListener(YahooResultEvent.GET_PRESENCE_SUCCESS, handleGetPresence);
+                _user.updates.addEventListener(YahooResultEvent.GET_UPDATES_SUCCESS, handleGetUpdates);
+                _user.profile.addEventListener(YahooResultEvent.GET_PROFILE_FAILURE, handleRequestFail);
+                _user.status.addEventListener(YahooResultEvent.GET_PRESENCE_FAILURE, handleRequestFail);
+                _user.updates.addEventListener(YahooResultEvent.GET_UPDATES_FAILURE, handleRequestFail);
+                // get data of Profile, Presence, Updates
+                _user.profile.getProfile();
+                _user.status.getPresence();
+                _user.updates.getUpdates(0,20);
+            }
+            // }}}
+            // handleRequestFail(event:YahooResultEvent) : Profile, Presence, Update 的失敗都會跑到這邊喔 {{{
+            private function handleRequestFail(event:YahooResultEvent):void {
+                Alert.show("Error loading data from "+event.data.url, "Error");
+            }
+            // }}}
+            // handleUserGetProfile(event:YahooResultEvent) 
+            private function handleUserGetProfile(event:YahooResultEvent):void {
+                _viewerProfile = event.data as Profile;
+            }
+            // handleGetPresence(event:YahooResultEvent) 
+            private function handleGetPresence(event:YahooResultEvent):void {
+                _viewerPresence = event.data as Presence;
+            }
+            // handleGetUpdates(event:YahooResultEent) 
+            private function handleGetUpdates(event:YahooResultEvent):void {
+                _viewerUpdates = event.data as Array; 
+            }
+        ]]>
+    </mx:Script>
+	<mx:Panel title="{_viewerProfile.nickname}" width="568" height="287" layout="absolute">
+		<mx:HBox x="0" y="0" width="548" height="247">
+			<mx:Image width="50%" height="247" source="{_viewerProfile.image.imageUrl}" />
+			<mx:VBox width="50%" height="100%">
+				<mx:Text text="{_viewerProfile.nickname}" />
+				<mx:Text text="{_viewerPresence.status}"/>
+				<mx:Text text="{_viewerProfile.location}"/>
+				
+			</mx:VBox>
+		</mx:HBox>
+	</mx:Panel>
+	
+</mx:Application>

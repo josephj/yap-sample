@@ -1,0 +1,28 @@
+<?php include('inc/css.html'); ?>
+<div id="box">
+<h1>YAP JavaScript API</h1>
+<h2>For Open Week Training Session</h2>
+<?php 
+    $items = array();
+    $items[] = array('url'=>'people.html', 'text'=>'People', 'description'=>'Fetch a group of people and show their thumbnail in one request.<br><a href="people_template.html">Template</a> | <a href="people_sample.html">Final</a>');
+    $items[] = array('url'=>'make_request.html', 'text'=>'Make Request', 'description'=>'Make customized AJAX request.<br><a href="make_request_template.html">Template</a> | <a href="make_request_sample.html">Final</a>');
+    $items[] = array('url'=>'make_request_yql.html', 'text'=>'Make Request to YQL', 'description'=>'Use YQL to fetch data.<br><a href="make_request_yql_template.html">Template</a> | <a href="make_request_yql_sample.html">Final</a>');
+    $items[] = array('url'=>'profile.html', 'text'=>'User Profile (Flex)', 'description'=>'User Flex to create user\'s profile.<br><a href="http://josephj.com/training/openweek/yos-1.1.swc" target="_blank">yos-1.1.swc</a> | <a href="http://josephj.com/training/openweek/profile_template.mxml" target="_blank">Template</a> | <a href="http://josephj.com/training/openweek/profile_sample.mxml" target="_blank">Final</a>');
+?>
+<div id="list">
+    <div class="bd">
+        <ul>
+            <?php foreach ($items as $item) { ?><li>
+                <a href="<?php echo $item['url']; ?>"><?php echo $item['text']; ?></a>
+                <p><?php echo $item['description']; ?></p>
+            </li>
+            <?php } ?>
+
+        </ul>
+    </div>
+</div>
+<div id="ft">You can see all the source code <a href="http://yap.josephj.com/lab/javascript/" style="float:none;" target="_blank">here</a>.</div>
+</div>
+<style>
+#box {background:url(http://code.google.com/apis/opensocial/images/opensocial.jpg) left top no-repeat;padding-left:240px;}
+</style>

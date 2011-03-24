@@ -1,0 +1,178 @@
+<h1>Persist API</h1>
+<div id="form">
+    <form onsubmit="return false;">
+        <div>
+            <label>key:</label>
+            <input type="text" name="key" value="test">
+            <span class="yui-button">
+                <span class="first-child">
+                    <input type="submit" value="remove" onclick="removeMyAppData();return false;">
+                    <span>Remove</span>
+                </span>
+            </span>
+            <span class="yui-button">
+                <span class="first-child">
+                    <input type="submit" value="get" onclick="getMyAppData();return false;">
+                    <span>Fetch</span>
+                </span>
+            </span>
+        </div>
+        <div>
+            <label>value:</label>
+            <input type="text" name="value">
+            <span class="yui-button">
+                <span class="first-child">
+                    <input type="submit" value="set" onclick="setMyAppData();return false;">
+                    <span>Update</span>
+                </span>
+            </span>
+        </div>
+    </form>
+</div>
+<?php include('inc/show.html'); ?>
+<div id="source">
+    <div class="hd">
+        <h2>Source Code</h2>
+    </div>
+    <div class="bd">
+        <textarea class="code">
+function getCallback(resp) {
+    var resp = resp.get('appdata');
+    if (resp.hadError()) {
+        alert('[Error] ' + resp.getErrorMessage());
+        return;
+    }
+    var data = resp.getData();
+    var html = [];
+    for (var i in data) {
+        for (var y in data[i]) {
+            html.push('[Fetch] ' + y +  ' = ' + data[i][y]); 
+        }
+        break;
+    }
+    alert(html.join(''));
+}
+function setCallback(resp) {
+    var resp = resp.get('appdata');
+    if (resp.hadError()) {
+        alert('[Error]' + resp.getErrorMessage());
+        return;
+    }
+    alert('[Update] Success!');
+}
+function removeCallback(resp) {
+    var resp = resp.get('appdata');
+    if (resp.hadError()) {
+        alert('[Error] ' + resp.getErrorMessage());
+        return;
+    }
+    if (resp.getData()) {
+        alert('[Remove] Success!');
+    }
+}
+var idspec = opensocial.newIdSpec({'userId':'VIEWER'});
+function getMyAppData() {
+    var req = opensocial.newDataRequest();
+    req.add(req.newFetchPersonAppDataRequest(idspec, 'keyname'), 'appdata');
+    req.send(getCallback);
+}
+function setMyAppData() {
+    var req = opensocial.newDataRequest();
+    req.add(req.newUpdatePersonAppDataRequest(idspec, 'keyname', 'keyvalue'),  'appdata');
+    req.send(setCallback);
+}
+function removeMyAppData() {
+    var req = opensocial.newDataRequest();
+    req.add(req.newRemovePersonAppDataRequest(idspec, 'keyname'), 'appdata');
+    req.send(removeCallback);
+}</textarea>
+    </div>
+</div>
+<?php include('inc/error.html'); ?>
+<?php include('inc/foot.html'); ?>
+<?php include('inc/css.html'); ?>
+<?php include('inc/js.html'); ?>
+<script>
+var showEl = document.getElementById('show');
+var formEl = document.getElementById('form').getElementsByTagName('form')[0];
+var listEl = getElementsByClassName('bd', 'div', showEl)[0].getElementsByTagName('ol')[0];
+var errorEl = getElementsByClassName('bd', 'div', document.getElementById('error'))[0].getElementsByTagName('ol')[0];
+var statEl = document.getElementById('benchmark');
+var tStart, tEnd;
+var idspec = opensocial.newIdSpec({'userId':'VIEWER'});
+// getCallback(resp) {{{ 
+function getCallback(resp) {
+    var resp = resp.get('appdata');
+    if (resp.hadError()) {
+        errorEl.innerHTML += '<li><b>[Error]</b> ' + resp.getErrorMessage() + '</li>';
+        return;
+    }
+    var data = resp.getData();
+    var html = [];
+    for (var i in data) {
+        for (var y in data[i]) {
+            html.push('<li><b>[Fetch]</b> ' + y +  ' = ' + data[i][y] + '</li>'); 
+        }
+        break;
+    }
+    listEl.innerHTML += html.join('');
+    tEnd = new Date();
+    statEl.innerHTML = 'Success Benchmark: ' + ((tEnd - tStart) / 1000) + ' sec'; 
+}
+// }}}
+// setCallback(resp) {{{
+function setCallback(resp) {
+    var resp = resp.get('appdata');
+    if (resp.hadError()) {
+        errorEl.innerHTML += '<li><b>[Error]</b> ' + resp.getErrorMessage() + '</li>';
+        return;
+    }
+    listEl.innerHTML += '<li><b>[Update]</b> Success!</li>';
+    tEnd = new Date();
+    statEl.innerHTML = 'Success Benchmark: ' + ((tEnd - tStart) / 1000) + ' sec'; 
+}
+// }}}
+// removeCallback(resp) {{{
+function removeCallback(resp) {
+    var resp = resp.get('appdata');
+    if (resp.hadError()) {
+        errorEl.innerHTML += '<li><b>[Error]</b> ' + resp.getErrorMessage() + '</li>';
+        return;
+    }
+    if (resp.getData()) {
+        listEl.innerHTML += '<li><b>[Remove]</b> Success!</li>';
+    }
+    tEnd = new Date();
+    statEl.innerHTML = 'Success Benchmark: ' + ((tEnd - tStart) / 1000) + ' sec'; 
+}
+// }}}
+// getMyAppData() {{{
+function getMyAppData() {
+    var req = opensocial.newDataRequest();
+    var idspec = opensocial.newIdSpec({'userId':'VIEWER'});
+    req.add(req.newFetchPersonAppDataRequest(idspec, formEl.elements['key'].value.split(',')), 'appdata');
+    req.send(getCallback);
+    tStart = new Date();
+}
+// }}}
+// setMyAppData() {{{
+function setMyAppData() {
+    var req = opensocial.newDataRequest();
+    if (formEl.elements['key'].value.indexOf(',') != -1)  {
+        alert('only one column while you set data');
+        return;
+    }
+    req.add(req.newUpdatePersonAppDataRequest(idspec, formEl.elements['key'].value, formEl.elements['value'].value),  'appdata');
+    req.send(setCallback);
+    tStart = new Date();
+}
+// }}}
+// removeMyAppData() {{{
+function removeMyAppData() {
+    var req = opensocial.newDataRequest();
+    req.add(req.newRemovePersonAppDataRequest(idspec, formEl.elements['key'].value), 'appdata');
+    req.send(removeCallback);
+    tStart = new Date();
+}
+// }}}
+</script>

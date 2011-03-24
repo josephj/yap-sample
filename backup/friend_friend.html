@@ -1,0 +1,79 @@
+<div id="friend"></div>
+<div id="friend2"></div>
+<script>
+        /*
+function getFriend(id) {
+    var req = opensocial.newDataRequest();
+    var idspec = opensocial.newIdSpec({'userId':id, 'groupId':'FRIENDS'});
+    req.add(req.newFetchPeopleRequest(idspec, params), 'viewerFriends');
+    req.send(fetchPeopleHandler);
+}
+        html.push([
+            '<li>',
+                '<a href="' + person.getField(opensocial.Person.Field.ID) + '"><img s' + 'rc="' + person.getField(opensocial.Person.Field.THUMBNAIL_URL) +  '" alt="' + person.getDisplayName() + '"></a>',
+            '</li>'
+        ].join(''));
+        var html = ['<ul>'];
+        html.push('</ul>');
+
+    document.getElementById('friend').innerHTML = html.join('');
+    function onClick(e) {
+        targetEl = e.target;
+        if (targetEl.nodeName == 'IMG') {
+            targetEl = targetEl.parentNode;
+        }  
+        alert(targetEl.href);
+        e.preventDefault(e);
+        return false;
+    }
+    document.getElementById('friend').addEventListener('click', onClick);
+        */
+
+var friendlist = {
+    "total" : 0,
+    "friends" : {}
+};
+var params = {};
+params[opensocial.DataRequest.PeopleRequestFields.MAX] = 1000;
+params[opensocial.DataRequest.PeopleRequestFields.FILTER] = opensocial.DataRequest.FilterType.HAS_APP;
+params[opensocial.DataRequest.PeopleRequestFields.SORT_ORDER] = opensocial.DataRequest.SortOrder.NAME;
+function updateUI(resp) {
+    for (var i in friendlist['friends']) {
+        try {
+           var id = i + '';
+           var resp = resp.get(id);
+           if (!resp.hadError()) {
+               var data = resp.getData();
+               data.each(function(person){
+               });
+            }       
+        }
+        catch (e) {
+        }
+    }
+}
+function fetchPeopleHandler(resp) {
+    var resp = resp.get('viewer-friends'); 
+    if (!resp.hadError()) {
+        var friends = resp.getData();
+        var req = opensocial.newDataRequest();
+        friends.each(function(person) {
+            friendlist['total']++;
+            var sId = person.getId();
+            var idspec = opensocial.newIdSpec({'userId':sId, 'groupId':'FRIENDS'});
+            var id = 'ydn-' + friendlist['total']; 
+            friendlist['friends'][id] = [];
+            req.add(req.newFetchPeopleRequest(idspec, params), id);
+        });
+        friendlist['total']++;
+        req.send(updateUI);
+    }
+}
+function getFriend(sId, fCallback) {
+    var req = opensocial.newDataRequest();
+    var idspec = opensocial.newIdSpec({'userId':sId, 'groupId':'FRIENDS'});
+    req.add(req.newFetchPeopleRequest(idspec, params), 'viewer-friends');
+    req.send(fetchPeopleHandler);
+}
+getFriend('VIEWER', fetchPeopleHandler);
+</script>
